@@ -1,13 +1,22 @@
 <!doctype html>
-<html lang="en" ng-app>
+<html lang="en" ng-app="tttApp">
     <head>
         <meta charset="utf-8">
         <script src="angular.js"></script>
+        <script src="controllers.js"></script>
     </head>
     <body>
         <div>
             <%= title %>
         </div>
-        <div>This is an Angular {{'test' + '!!!'}}</div>
+        <table ng-controller="BoardController">
+            <tbody>
+                <tr ng-repeat="row in [] | range:boardSize">
+                    <td ng-repeat="col in [] | range:boardSize">
+                        {{ row * 3 + col }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </body>
 </html>
