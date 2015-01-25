@@ -9,13 +9,12 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'public', 'views'));
 
 //Express routes
-app.use(express.static(path.join(__dirname, 'public', 'js')));
 app.get('/', function (req, res) {
     res.render('index', { title: 'Tic-tac-toe!!!' });
 });
-app.get('/angular.js', function (req, res) {
-    res.sendFile(path.join(__dirname, 'node_modules', 'angular', 'angular.js'));
-});
+app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
+app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
+app.use('/lib/angular.js', express.static(path.join(__dirname, 'node_modules', 'angular', 'angular.js')));
 
 //Express startup
 app.listen(3000, function () {
