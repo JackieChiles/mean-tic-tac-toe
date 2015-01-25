@@ -12,9 +12,9 @@
         </div>
         <table ng-controller="BoardController">
             <tbody>
-                <tr ng-repeat="row in [] | range:boardSize">
-                    <td ng-repeat="col in [] | range:boardSize">
-                        {{ row * 3 + col }}
+                <tr ng-repeat="row in positions">
+                    <td ng-repeat="cell in row" ng-click="play(cell)">
+                        {{ cell.value }}
                     </td>
                 </tr>
             </tbody>
