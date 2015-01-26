@@ -19,8 +19,8 @@
     });
 
     app.controller('BoardController', function ($scope) {
-        $scope.size = 3;
-        $scope.positions = (function () {
+        //Board reset function
+        var getFreshBoard = function () {
             var row = 0;
             var col = 0;
             var positions = [];
@@ -38,8 +38,11 @@
             }
             
             return positions;
-        })();
-        console.log($scope.positions);
+        }
+        
+        //Scope data
+        $scope.size = 3;
+        $scope.positions = getFreshBoard();
         $scope.currentPlayer = 'X';
         $scope.winner = function (row, col) {
             var player = $scope.positions[row][col].value;
@@ -49,11 +52,20 @@
                 return cell.value === player;
             }).length === $scope.size;
             
-            //TODO: Check column
+            //Check column
+            var cWinner = true;
+            var i = 0;
+            
+            for (i = 0; i < $scope.size; i++) {
+                if ($scope.positions[i][col].value !== player) {
+                    cWinner = false;
+                    break;
+                }
+            }
             
             //TODO: Check diagonals
             
-            return rWinner ? player : null;
+            return rWinner || cWinner ? player : null;
         };
         $scope.play = function (cell) {
             var winner = null;
@@ -67,9 +79,11 @@
             winner = $scope.winner(row, col);
             
             if(winner) {
-                alert(winner + " wins!!!");
-                //TODO: reset board
+                alert(winner + " wins!!! Resetting board...");
+                $scope.positions = getFreshBoard();
             }
+            
+            //TODO: check for cat
             
             //Change players
             $scope.currentPlayer = $scope.currentPlayer === 'X' ? 'O' : 'X';
