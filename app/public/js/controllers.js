@@ -2,21 +2,6 @@
     'use strict';
 
     var app = angular.module('tttApp', []);
-    
-    //Custom 'range' filter for doing ng-repeat n times
-    app.filter('range', function () {
-        return function (val, range) {
-            var i = 0;
-            
-            range = parseInt(range, 10);
-            
-            for (i = 0; i < range; i++) {
-                val.push(i);
-            }
-            
-            return val;
-        };
-    });
 
     app.controller('BoardController', function ($scope) {
         //Board reset function
@@ -38,12 +23,30 @@
             }
             
             return positions;
-        }
+        };
+        
+        //Board full check function
+        var isBoardFull = function () {
+            //Filter down to rows with empty cells: board full if there are none
+            return $scope.positions.filter(function (row) {
+                //Filter down to empty cells
+                return row.filter(function (cell) {
+                    return cell.value !== 'X' && cell.value !== 'O';
+                }).length > 0;
+            }).length === 0;
+        };
+        
+        var isPlayLegal = function(cell) {
+            return cell.value !== 'X' && cell.value !== 'O';
+        };
         
         //Scope data
         $scope.size = 3;
         $scope.positions = getFreshBoard();
         $scope.currentPlayer = 'X';
+        $scope.currentPlayerMessage = function () {
+            return 'Current player: ' + $scope.currentPlayer;
+        };
         $scope.winner = function (row, col) {
             var player = $scope.positions[row][col].value;
             
@@ -72,18 +75,34 @@
             var row = cell.row;
             var col = cell.col;
             
+            if (!isPlayLegal(cell)) {
+                alert('Illegal play!!!');
+                return;
+            }
+            
             //Make the play at the selected position
             $scope.positions[row][col].value = $scope.currentPlayer;
             
             //Check for a win
             winner = $scope.winner(row, col);
             
-            if(winner) {
-                alert(winner + " wins!!! Resetting board...");
-                $scope.positions = getFreshBoard();
+            if (winner) {
+                setTimeout(function () {
+                    alert(winner + " wins!!! Resetting board...");
+                    $scope.$apply(function() {
+                        $scope.positions = getFreshBoard();
+                    });
+                }, 100);
             }
-            
-            //TODO: check for cat
+            else if (isBoardFull()) {
+                //If there is no winner, it's a cat's game
+                setTimeout(function () {
+                    alert("Cat's game!!! Resetting board...");
+                    $scope.$apply(function() {
+                        $scope.positions = getFreshBoard();
+                    });
+                }, 100);
+            }
             
             //Change players
             $scope.currentPlayer = $scope.currentPlayer === 'X' ? 'O' : 'X';

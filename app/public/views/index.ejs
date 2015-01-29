@@ -6,11 +6,14 @@
         <script src="lib/angular.js"></script>
         <script src="js/controllers.js"></script>
     </head>
-    <body>
+    <body ng-controller="BoardController">
         <div>
             <%= title %>
         </div>
-        <table ng-controller="BoardController">
+        <div>
+            {{ currentPlayerMessage() }}
+        </div>
+        <table>
             <tbody>
                 <tr ng-repeat="row in positions">
                     <td ng-repeat="cell in row" ng-click="play(cell)">
