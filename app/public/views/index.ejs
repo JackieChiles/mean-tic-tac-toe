@@ -7,8 +7,16 @@
         <script src="js/controllers.js"></script>
     </head>
     <body ng-controller="BoardController">
-        <div>
+        <h1>
             <%= title %>
+        </h1>
+        <div>
+            <strong>
+                {{ currentMessage }}
+            </strong>
+        </div>
+        <div>
+            <button ng-click="resetBoard()" ng-show="showResetButton">Reset Board</button>
         </div>
         <div>
             {{ currentPlayerMessage() }}

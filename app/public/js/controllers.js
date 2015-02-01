@@ -47,6 +47,8 @@
         $scope.currentPlayerMessage = function () {
             return 'Current player: ' + $scope.currentPlayer;
         };
+        $scope.currentMessage = '';
+        $scope.showResetButton = false;
         $scope.winner = function (row, col) {
             var player = $scope.positions[row][col].value;
             
@@ -76,7 +78,7 @@
             var col = cell.col;
             
             if (!isPlayLegal(cell)) {
-                alert('Illegal play!!!');
+                $scope.currentMessage = 'Illegal play!!!';
                 return;
             }
             
@@ -87,25 +89,22 @@
             winner = $scope.winner(row, col);
             
             if (winner) {
-                setTimeout(function () {
-                    alert(winner + " wins!!! Resetting board...");
-                    $scope.$apply(function() {
-                        $scope.positions = getFreshBoard();
-                    });
-                }, 100);
+                $scope.currentMessage = winner + ' wins!!!';
+                $scope.showResetButton = true;
             }
             else if (isBoardFull()) {
                 //If there is no winner, it's a cat's game
-                setTimeout(function () {
-                    alert("Cat's game!!! Resetting board...");
-                    $scope.$apply(function() {
-                        $scope.positions = getFreshBoard();
-                    });
-                }, 100);
+                $scope.currentMessage = "Cat's game!!!";
+                $scope.showResetButton = true;
             }
             
             //Change players
             $scope.currentPlayer = $scope.currentPlayer === 'X' ? 'O' : 'X';
+        };
+        $scope.resetBoard = function () {
+            $scope.showResetButton = false;
+            $scope.positions = getFreshBoard();
+            $scope.currentMessage = '';
         };
     });
 }());
