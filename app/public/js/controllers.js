@@ -40,6 +40,61 @@
             return cell.value !== 'X' && cell.value !== 'O';
         };
         
+        //Returns winner if the given cell leads to a row-win, null otherwise
+        var rowWinner = function (row, col) {
+            var player = $scope.positions[row][col].value;
+            
+            return $scope.positions[row].filter(function (cell) {
+                return cell.value === player;
+            }).length === $scope.size ? player : null;
+        };
+        
+        //Returns winner if the given cell leads to a column-win, null otherwise
+        var columnWinner = function (row, col) {
+            var player = $scope.positions[row][col].value;
+            var isWinner = true;
+            var i = 0;
+            
+            //Look for the first play not made by this player in the column and exit
+            for (i = 0; i < $scope.size; i++) {
+                if ($scope.positions[i][col].value !== player) {
+                    isWinner = false;
+                    break;
+                }
+            }
+            
+            return isWinner ? player : null;
+        };
+        
+        //Returns winner if the given cell leads to a diagonal-win, null otherwise
+        var diagonalWinner = function (row, col) {
+            var player = $scope.positions[row][col].value;
+            var isTopLeftDiagWinner = true;
+            var isBottomLeftDiagWinner = true;
+            var i = 0;
+            var row;
+            
+            //If the play was not on a diagonal, it's not a diagonal-win
+            if (row !== col && row !== $scope.size - 1 - col) {
+                return null;
+            }
+            
+            //Examine both diagonals in each row for values not matching the current player
+            for (i = 0; i < $scope.size; i++) {
+                row = $scope.positions[i];
+                
+                isTopLeftDiagWinner = isTopLeftDiagWinner && row[i].value === player;
+                isBottomLeftDiagWinner = isBottomLeftDiagWinner && row[$scope.size - 1 - i].value === player;
+                
+                //Stop looking if neither diagonal is a winner
+                if (!isTopLeftDiagWinner && !isBottomLeftDiagWinner) {
+                    break;
+                }
+            }
+            
+            return isTopLeftDiagWinner || isBottomLeftDiagWinner ? player : null;
+        };
+        
         //Scope data
         $scope.size = 3;
         $scope.positions = getFreshBoard();
@@ -50,27 +105,7 @@
         $scope.currentMessage = '';
         $scope.showResetButton = false;
         $scope.winner = function (row, col) {
-            var player = $scope.positions[row][col].value;
-            
-            //Check row
-            var rWinner = $scope.positions[row].filter(function (cell) {
-                return cell.value === player;
-            }).length === $scope.size;
-            
-            //Check column
-            var cWinner = true;
-            var i = 0;
-            
-            for (i = 0; i < $scope.size; i++) {
-                if ($scope.positions[i][col].value !== player) {
-                    cWinner = false;
-                    break;
-                }
-            }
-            
-            //TODO: Check diagonals
-            
-            return rWinner || cWinner ? player : null;
+            return columnWinner(row, col) || rowWinner(row, col) || diagonalWinner(row, col);
         };
         $scope.play = function (cell) {
             var winner = null;
