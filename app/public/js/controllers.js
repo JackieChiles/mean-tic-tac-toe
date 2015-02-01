@@ -2,7 +2,7 @@
 
 var app = angular.module('tttApp', []);
 
-app.controller('BoardController', function ($scope) {
+app.controller('BoardController', function ($scope, socket) {
     //Board reset function
     var getFreshBoard = function () {
         var row = 0;
@@ -118,6 +118,9 @@ app.controller('BoardController', function ($scope) {
 
         //Make the play at the selected position
         $scope.positions[row][col].value = $scope.currentPlayer;
+        
+        //Tell the server about the play
+        socket.emit('play', $scope.positions[row][col]);
 
         //Check for a win
         winner = $scope.winner(row, col);
