@@ -10,6 +10,7 @@ var path = require('path');
 io.on('connection', function (socket) {
     socket.on('play', function (msg) {
         console.log(msg);
+        io.emit('play', msg);
     })
 });
 

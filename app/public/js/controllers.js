@@ -3,6 +3,11 @@
 var app = angular.module('tttApp', []);
 
 app.controller('BoardController', function ($scope, socket) {
+    //Socket setup
+    socket.on('play', function (msg) {
+        play(msg);
+    });
+    
     //Board reset function
     var getFreshBoard = function () {
         var row = 0;
@@ -93,20 +98,8 @@ app.controller('BoardController', function ($scope, socket) {
 
         return isTopLeftDiagWinner || isBottomLeftDiagWinner ? player : null;
     };
-
-    //Scope data
-    $scope.size = 3;
-    $scope.positions = getFreshBoard();
-    $scope.currentPlayer = 'X';
-    $scope.currentPlayerMessage = function () {
-        return 'Current player: ' + $scope.currentPlayer;
-    };
-    $scope.currentMessage = '';
-    $scope.showResetButton = false;
-    $scope.winner = function (row, col) {
-        return columnWinner(row, col) || rowWinner(row, col) || diagonalWinner(row, col);
-    };
-    $scope.play = function (cell) {
+    
+    var play = function (cell) {
         var winner = null;
         var row = cell.row;
         var col = cell.col;
@@ -118,9 +111,6 @@ app.controller('BoardController', function ($scope, socket) {
 
         //Make the play at the selected position
         $scope.positions[row][col].value = $scope.currentPlayer;
-        
-        //Tell the server about the play
-        socket.emit('play', $scope.positions[row][col]);
 
         //Check for a win
         winner = $scope.winner(row, col);
@@ -137,6 +127,25 @@ app.controller('BoardController', function ($scope, socket) {
 
         //Change players
         $scope.currentPlayer = $scope.currentPlayer === 'X' ? 'O' : 'X';
+    };
+
+    //Scope data
+    $scope.size = 3;
+    $scope.positions = getFreshBoard();
+    $scope.currentPlayer = 'X';
+    $scope.currentPlayerMessage = function () {
+        return 'Current player: ' + $scope.currentPlayer;
+    };
+    $scope.currentMessage = '';
+    $scope.showResetButton = false;
+    $scope.winner = function (row, col) {
+        return columnWinner(row, col) || rowWinner(row, col) || diagonalWinner(row, col);
+    };
+    
+    //Scope public functions
+    $scope.play = function (cell) {     
+        //Tell the server about the play
+        socket.emit('play', $scope.positions[cell.row][cell.col]);
     };
     $scope.resetBoard = function () {
         $scope.showResetButton = false;
