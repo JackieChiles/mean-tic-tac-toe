@@ -5,9 +5,10 @@ var app = angular.module('tttApp', []);
 app.controller('BoardController', function ($scope, socket, modelFactory) {
     //Socket setup
     socket.on('play', function (msg) {
-        console.log('In play', msg);
         $scope.game.play(msg);
     });
+    
+    $scope.room = ROOM_NUM;
     
     //Functions
     $scope.play = function (cell) {
@@ -27,7 +28,9 @@ app.controller('BoardController', function ($scope, socket, modelFactory) {
         $scope.myPlayer = null;
         
         //Join the game
-        socket.emit('join', null, function (msg) {
+        socket.emit('join', {
+            room: $scope.room
+        }, function (msg) {
             $scope.myPlayer = msg.player;
         });
     };

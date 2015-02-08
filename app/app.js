@@ -6,60 +6,82 @@ var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var path = require('path');
 var modelFactory = require('./public/js/modelFactory');
-var game;
 
-//Just stick this here for now, should go in another module
-var gameServer = {
-    isPlayerX: false,
-    isPlayerO: false
-};
-
-var reset = function () {
-    game = modelFactory.newGame();
-    gameServer.isPlayerX = false;
-    gameServer.isPlayerO = false;
-};
-
-//Initialize the game server
-reset();
-
-//Socket.io setup
-io.on('connection', function (socket) {
-    socket.on('play', function (msg) {
-        console.log(msg);
-        
-        if (game.isPlayLegal(msg) && gameServer.isPlayerO && gameServer.isPlayerX) {
-            game.play(msg);
-            console.log('Emitting play message');
-            io.emit('play', msg);
-        }
-        
-        if (game.isGameOver()) {
-            reset();
-        }
-    });
+//Just stick this all here for now, should go in another module
+var rooms = {};
+var nextRoomNumber = 1;
+var GameRoom = function () {
+    var self = this;
     
-    socket.on('join', function (msg, callback) {
-        console.log('Join requested');
-        
+    self.game = modelFactory.newGame();
+    self.playerX = null;
+    self.playerO = null;
+    
+    //Functions
+    self.join = function (socket) {
         var player;
         
-        if (!gameServer.isPlayerX) {
+        if (!self.playerX) {
             player = 'X';
-            gameServer.isPlayerX = true;
+            self.playerX = socket.id;
         }
-        else if (!gameServer.isPlayerO) {
+        else if (!self.playerO) {
             player = 'O';
-            gameServer.isPlayerO = true;
+            self.playerO = socket.id;
         }
         else {
             //TODO: track observer count
             player = null;
         }
         
-        callback({
+        return {
             player: player
-        });
+        };
+    };
+    
+    self.play = function (socketServer, cell, room) {
+        if (self.game.isPlayLegal(cell) && self.playerO && self.playerX) {
+            self.game.play(cell);
+            console.log('Emitting play message to room: ', room);
+            io.to(room).emit('play', cell);
+        }
+    };
+};
+var createNewRoom = function () {
+    var roomNumber = nextRoomNumber;
+    
+    console.log('Create requested');
+        
+    rooms[roomNumber] = new GameRoom();
+    nextRoomNumber = nextRoomNumber + 1;
+    
+    return roomNumber;
+};
+
+//Socket.io setup
+io.on('connection', function (socket) {
+    socket.on('play', function (msg) {
+        console.log('In play (msg): ', msg);
+        console.log('Rooms for socket: ', socket.rooms);
+        
+        //TODO: don't hardcode the index here, but should be safe for now. Room 0 is the socket's private room, room 1 should be the game room
+        var id = socket.rooms[1];
+        var gameRoom = rooms[id];
+
+        gameRoom.play(io, msg, id);
+        
+        //TODO: need to remove the room once all have disconnected?
+        if (gameRoom.game.isGameOver()) {
+            rooms[id] = new GameRoom();
+        }
+    });
+    
+    socket.on('join', function (msg, callback) {
+        console.log('Join request (room, socket): ', msg.room, socket.id);
+        
+        //TODO: error if room not found
+        socket.join(msg.room);
+        callback(rooms[msg.room].join(socket));
     });
 });
 
@@ -68,8 +90,17 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'public', 'views'));
 
 //Express routes
+app.param('roomId', function (req, res, next, id) {
+    req.roomId = id;
+    next();
+});
 app.get('/', function (req, res) {
-    res.render('index', { title: 'Tic-tac-toe!!!' });
+    //Create a new room and redirect to that room
+    res.redirect('/' + createNewRoom());
+});
+app.get('/:roomId', function (req, res) {
+    //TODO: Return 404 if game not found, otherwise render index with gameId
+    res.render('index', { title: 'Tic-tac-toe!!!', roomId: req.roomId });
 });
 app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
