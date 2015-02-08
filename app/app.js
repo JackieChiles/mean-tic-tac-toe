@@ -5,13 +5,62 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var path = require('path');
+var modelFactory = require('./public/js/modelFactory');
+var game;
+
+//Just stick this here for now, should go in another module
+var gameServer = {
+    isPlayerX: false,
+    isPlayerO: false
+};
+
+var reset = function () {
+    game = modelFactory.newGame();
+    gameServer.isPlayerX = false;
+    gameServer.isPlayerO = false;
+};
+
+//Initialize the game server
+reset();
 
 //Socket.io setup
 io.on('connection', function (socket) {
     socket.on('play', function (msg) {
         console.log(msg);
-        io.emit('play', msg);
-    })
+        
+        if (game.isPlayLegal(msg) && gameServer.isPlayerO && gameServer.isPlayerX) {
+            game.play(msg);
+            console.log('Emitting play message');
+            io.emit('play', msg);
+        }
+        
+        if (game.isGameOver()) {
+            reset();
+        }
+    });
+    
+    socket.on('join', function (msg, callback) {
+        console.log('Join requested');
+        
+        var player;
+        
+        if (!gameServer.isPlayerX) {
+            player = 'X';
+            gameServer.isPlayerX = true;
+        }
+        else if (!gameServer.isPlayerO) {
+            player = 'O';
+            gameServer.isPlayerO = true;
+        }
+        else {
+            //TODO: track observer count
+            player = null;
+        }
+        
+        callback({
+            player: player
+        });
+    });
 });
 
 //Express settings

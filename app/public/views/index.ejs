@@ -6,7 +6,9 @@
         <script src="lib/angular.js"></script>
         <script src="lib/socket.io.js"></script>
         <script src="js/controllers.js"></script>
+        <script src="js/modelFactory.js"></script>
         <script src="js/services.js"></script>
+
     </head>
     <body ng-controller="BoardController">
         <h1>
@@ -14,20 +16,23 @@
         </h1>
         <div>
             <strong>
-                {{ currentMessage }}
+                {{ getCurrentMessage() }}
             </strong>
         </div>
         <div>
-            <button ng-click="resetBoard()" ng-show="showResetButton">Reset Board</button>
+            <button ng-click="reset()" ng-show="game.isGameOver()">Reset Board</button>
         </div>
         <div>
-            {{ currentPlayerMessage() }}
+            {{ getCurrentPlayerMessage() }}
+        </div>
+        <div>
+            {{ getMyPlayerMessage() }}
         </div>
         <table>
             <tbody>
-                <tr ng-repeat="row in positions">
+                <tr ng-repeat="row in game.positions">
                     <td ng-repeat="cell in row" ng-click="play(cell)">
-                        {{ cell.value }}
+                        {{ cell.player }}
                     </td>
                 </tr>
             </tbody>

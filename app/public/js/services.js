@@ -26,3 +26,5 @@ app.factory('socket', function ($rootScope) {
         }
     };
 });
+
+app.factory('modelFactory', modelFactory);

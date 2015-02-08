@@ -2,154 +2,59 @@
 
 var app = angular.module('tttApp', []);
 
-app.controller('BoardController', function ($scope, socket) {
+app.controller('BoardController', function ($scope, socket, modelFactory) {
     //Socket setup
     socket.on('play', function (msg) {
-        play(msg);
+        console.log('In play', msg);
+        $scope.game.play(msg);
     });
     
-    //Board reset function
-    var getFreshBoard = function () {
-        var row = 0;
-        var col = 0;
-        var positions = [];
-
-        for (row = 0; row < $scope.size; row++) {
-            positions.push([]);
-
-            for(col = 0; col < $scope.size; col++) {
-                positions[row].push({
-                    row: row,
-                    col: col,
-                    value: row * $scope.size + col
-                });
-            }
+    //Functions
+    $scope.play = function (cell) {
+        //Don't submit play if I'm just observing
+        if ($scope.myPlayer) {
+            socket.emit('play', {
+                row: cell.row,
+                col: cell.col,
+                player: $scope.myPlayer
+            });
         }
-
-        return positions;
-    };
-
-    //Board full check function
-    var isBoardFull = function () {
-        //Filter down to rows with empty cells: board full if there are none
-        return $scope.positions.filter(function (row) {
-            //Filter down to empty cells
-            return row.filter(function (cell) {
-                return cell.value !== 'X' && cell.value !== 'O';
-            }).length > 0;
-        }).length === 0;
-    };
-
-    var isPlayLegal = function(cell) {
-        return cell.value !== 'X' && cell.value !== 'O';
-    };
-
-    //Returns winner if the given cell leads to a row-win, null otherwise
-    var rowWinner = function (row, col) {
-        var player = $scope.positions[row][col].value;
-
-        return $scope.positions[row].filter(function (cell) {
-            return cell.value === player;
-        }).length === $scope.size ? player : null;
-    };
-
-    //Returns winner if the given cell leads to a column-win, null otherwise
-    var columnWinner = function (row, col) {
-        var player = $scope.positions[row][col].value;
-        var isWinner = true;
-        var i = 0;
-
-        //Look for the first play not made by this player in the column and exit
-        for (i = 0; i < $scope.size; i++) {
-            if ($scope.positions[i][col].value !== player) {
-                isWinner = false;
-                break;
-            }
-        }
-
-        return isWinner ? player : null;
-    };
-
-    //Returns winner if the given cell leads to a diagonal-win, null otherwise
-    var diagonalWinner = function (row, col) {
-        var player = $scope.positions[row][col].value;
-        var isTopLeftDiagWinner = true;
-        var isBottomLeftDiagWinner = true;
-        var i = 0;
-        var row;
-
-        //If the play was not on a diagonal, it's not a diagonal-win
-        if (row !== col && row !== $scope.size - 1 - col) {
-            return null;
-        }
-
-        //Examine both diagonals in each row for values not matching the current player
-        for (i = 0; i < $scope.size; i++) {
-            row = $scope.positions[i];
-
-            isTopLeftDiagWinner = isTopLeftDiagWinner && row[i].value === player;
-            isBottomLeftDiagWinner = isBottomLeftDiagWinner && row[$scope.size - 1 - i].value === player;
-
-            //Stop looking if neither diagonal is a winner
-            if (!isTopLeftDiagWinner && !isBottomLeftDiagWinner) {
-                break;
-            }
-        }
-
-        return isTopLeftDiagWinner || isBottomLeftDiagWinner ? player : null;
     };
     
-    var play = function (cell) {
-        var winner = null;
-        var row = cell.row;
-        var col = cell.col;
-
-        if (!isPlayLegal(cell)) {
-            $scope.currentMessage = 'Illegal play!!!';
-            return;
-        }
-
-        //Make the play at the selected position
-        $scope.positions[row][col].value = $scope.currentPlayer;
-
-        //Check for a win
-        winner = $scope.winner(row, col);
+    $scope.reset = function () {
+        //Data
+        $scope.game = modelFactory.newGame();
+        $scope.myPlayer = null;
+        
+        //Join the game
+        socket.emit('join', null, function (msg) {
+            $scope.myPlayer = msg.player;
+        });
+    };
+    
+    $scope.getMyPlayerMessage = function () {
+        return $scope.myPlayer ? 'You are playing as: ' + $scope.myPlayer :
+            'You are currently observing the game.';
+    };
+    
+    $scope.getCurrentMessage = function () {
+        var winner = $scope.game.winner;
 
         if (winner) {
-            $scope.currentMessage = winner + ' wins!!!';
-            $scope.showResetButton = true;
+            return winner + ' wins!!!';
         }
-        else if (isBoardFull()) {
-            //If there is no winner, it's a cat's game
-            $scope.currentMessage = "Cat's game!!!";
-            $scope.showResetButton = true;
+        else if ($scope.game.isBoardFull()) {
+            return "Cat's game!!!";
         }
-
-        //Change players
-        $scope.currentPlayer = $scope.currentPlayer === 'X' ? 'O' : 'X';
-    };
-
-    //Scope data
-    $scope.size = 3;
-    $scope.positions = getFreshBoard();
-    $scope.currentPlayer = 'X';
-    $scope.currentPlayerMessage = function () {
-        return 'Current player: ' + $scope.currentPlayer;
-    };
-    $scope.currentMessage = '';
-    $scope.showResetButton = false;
-    $scope.winner = function (row, col) {
-        return columnWinner(row, col) || rowWinner(row, col) || diagonalWinner(row, col);
+        else {
+            return null;
+        }
     };
     
-    //Scope public functions
-    $scope.play = function (cell) {     
-        //Tell the server about the play
-        socket.emit('play', $scope.positions[cell.row][cell.col]);
+    $scope.getCurrentPlayerMessage = function () {
+        return 'Current player: ' + $scope.game.currentPlayer;
     };
-    $scope.resetBoard = function () {
-        $scope.showResetButton = false;
-        $scope.positions = getFreshBoard();
-        $scope.currentMessage = '';
-    };
+    
+    //Initialize controller
+    $scope.reset();
 });
