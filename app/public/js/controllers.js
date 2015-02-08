@@ -11,8 +11,8 @@ app.controller('BoardController', function ($scope, socket, modelFactory) {
     
     //Functions
     $scope.play = function (cell) {
-        //Don't submit play if I'm just observing
-        if ($scope.myPlayer) {
+        //Don't submit play if board is not enabled
+        if ($scope.isBoardEnabled()) {
             socket.emit('play', {
                 row: cell.row,
                 col: cell.col,
@@ -53,6 +53,10 @@ app.controller('BoardController', function ($scope, socket, modelFactory) {
     
     $scope.getCurrentPlayerMessage = function () {
         return 'Current player: ' + $scope.game.currentPlayer;
+    };
+    
+    $scope.isBoardEnabled = function () {
+        return $scope.myPlayer === $scope.game.currentPlayer && !$scope.game.isBoardFull();
     };
     
     //Initialize controller

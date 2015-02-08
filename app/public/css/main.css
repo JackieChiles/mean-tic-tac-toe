@@ -5,3 +5,8 @@ td {
     height: 20px;
     width: 20px;
 }
+
+.disabled {
+    background-color: #CCC;
+    cursor: not-allowed;
+}

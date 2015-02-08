@@ -31,7 +31,7 @@
         <table>
             <tbody>
                 <tr ng-repeat="row in game.positions">
-                    <td ng-repeat="cell in row" ng-click="play(cell)">
+                    <td ng-repeat="cell in row" ng-click="play(cell)" ng-class="{ disabled: !isBoardEnabled() }">
                         {{ cell.player }}
                     </td>
                 </tr>
