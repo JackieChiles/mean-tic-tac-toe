@@ -100,7 +100,7 @@ app.get('/', function (req, res) {
 });
 app.get('/:roomId', function (req, res) {
     //TODO: Return 404 if game not found, otherwise render index with gameId
-    res.render('index', { title: 'Tic-tac-toe!!!', roomId: req.roomId });
+    res.render('index', { roomId: req.roomId });
 });
 app.use('/js', express.static(path.join(__dirname, 'public', 'js')));
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
